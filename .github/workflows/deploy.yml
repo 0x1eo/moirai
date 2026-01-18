@@ -32,14 +32,10 @@ jobs:
         run: npm ci
       - name: Build with Astro
         run: npx astro build
-      - name: Move to moirai subfolder
-        run: |
-          mkdir -p moirai-deploy/moirai
-          mv dist/* moirai-deploy/moirai/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: moirai-deploy
+          path: dist
 
   deploy:
     environment:
