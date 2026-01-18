@@ -1,0 +1,278 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout
+    title="Clotho"
+    description="The Spinner - Evidence-as-Code Compliance Engine"
+>
+    <div class="doc-layout">
+        <aside class="sidebar">
+            <nav>
+                <a href="/moirai/clotho/" class="active">Overview</a>
+                <a href="/moirai/clotho/collectors/">Collectors</a>
+                <a href="/moirai/clotho/baseline/">Baseline Config</a>
+            </nav>
+        </aside>
+
+        <article class="content">
+            <header class="doc-header">
+                <span class="badge badge-python">Python</span>
+                <h1>Clotho</h1>
+                <p class="subtitle">The Spinner of the Thread</p>
+            </header>
+
+            <section>
+                <p>
+                    Clotho is a compliance auditing tool that SSHes into remote
+                    nodes, collects system evidence, and compares it against a
+                    defined baseline. It maps findings to ISO 27002:2022
+                    controls and generates PDF/HTML/JSON reports.
+                </p>
+
+                <blockquote>
+                    In Greek mythology, Clotho spun the thread of life. This
+                    Clotho spins the baseline - the expected state of your
+                    systems.
+                </blockquote>
+            </section>
+
+            <section>
+                <h2>Installation</h2>
+                <pre><code>python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt</code></pre>
+                <p class="note">
+                    Requires <code>pdflatex</code> (texlive) for PDF output.
+                </p>
+            </section>
+
+            <section>
+                <h2>Usage</h2>
+                <pre><code># Validate baseline syntax
+python clotho.py --validate-only
+
+# Audit all nodes in baseline
+python clotho.py
+
+# Audit specific node
+python clotho.py --node athena
+
+# Local dry-run (test on this machine)
+python clotho.py --local
+
+# Use specific SSH key
+python clotho.py --key-file ~/.ssh/id_ed25519
+
+# Run specific controls only
+python clotho.py --control 8.20,5.15
+
+# Show file diffs on hash mismatch
+python clotho.py --show-diffs
+
+# Compare with previous audit
+python clotho.py --compare-with previous
+
+# Show compliance trends
+python clotho.py --trend --days 30</code></pre>
+            </section>
+
+            <section>
+                <h2>Key Concepts</h2>
+                <div class="concept-grid">
+                    <div class="concept">
+                        <h3>Baseline</h3>
+                        <p>
+                            YAML file defining expected system state - allowed
+                            users, open ports, file hashes, running processes.
+                        </p>
+                    </div>
+                    <div class="concept">
+                        <h3>Controls</h3>
+                        <p>
+                            ISO 27002:2022 control mappings. Each control
+                            defines which collectors to run and what to expect.
+                        </p>
+                    </div>
+                    <div class="concept">
+                        <h3>Collectors</h3>
+                        <p>
+                            Modular evidence gatherers: <code>ports</code>, <code
+                                >users</code
+                            >, <code>files</code>, <code>processes</code>.
+                        </p>
+                    </div>
+                    <div class="concept">
+                        <h3>Findings</h3>
+                        <p>
+                            Pass/fail results with evidence. Each finding maps
+                            to a control and includes raw command output.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Output</h2>
+                <p>Reports are saved to <code>output/</code>:</p>
+                <table>
+                    <thead>
+                        <tr><th>Format</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            ><td><code>.pdf</code></td><td
+                                >Compiled LaTeX report for stakeholders</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>.html</code></td><td
+                                >Web-viewable report</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>.json</code></td><td
+                                >Machine-readable for Lachesis ingestion</td
+                            ></tr
+                        >
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h2>Integration with Lachesis</h2>
+                <p>
+                    Clotho's JSON output can be ingested by Lachesis for trend
+                    analysis:
+                </p>
+                <pre><code>curl -X POST http://localhost:6380/api/ingest \
+  -H "Content-Type: application/json" \
+  -d @output/audit_20260118.json</code></pre>
+            </section>
+        </article>
+    </div>
+</Layout>
+
+<style>
+    .doc-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: var(--space-2xl);
+        padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .sidebar a {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar a:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .sidebar a.active {
+        background: var(--bg-tertiary);
+        color: var(--gold-thread);
+        border-left: 2px solid var(--gold-thread);
+    }
+
+    .content {
+        max-width: 800px;
+    }
+
+    .doc-header {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .doc-header h1 {
+        margin: var(--space-sm) 0;
+    }
+
+    .subtitle {
+        font-family: var(--font-display);
+        color: var(--gold-thread);
+        font-style: italic;
+    }
+
+    section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    section h2 {
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    blockquote {
+        border-left: 3px solid var(--gold-thread);
+        padding-left: var(--space-lg);
+        margin: var(--space-lg) 0;
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+
+    .note {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .concept-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .concept {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+    }
+
+    .concept h3 {
+        font-size: 1rem;
+        color: var(--gold-thread);
+        margin-bottom: var(--space-sm);
+    }
+
+    .concept p {
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    @media (max-width: 900px) {
+        .doc-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: relative;
+            top: 0;
+        }
+
+        .sidebar nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+    }
+</style>

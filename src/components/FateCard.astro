@@ -1,0 +1,94 @@
+---
+interface Props {
+    title: string;
+    description: string;
+    icon: string;
+    href: string;
+    badge?: string;
+    badgeClass?: string;
+}
+
+const { title, description, icon, href, badge, badgeClass = "" } = Astro.props;
+---
+
+<a href={href} class="fate-card">
+    <div class="card-icon">{icon}</div>
+    <div class="card-content">
+        <div class="card-header">
+            <h3>{title}</h3>
+            {badge && <span class={`badge ${badgeClass}`}>{badge}</span>}
+        </div>
+        <p>{description}</p>
+    </div>
+    <div class="card-arrow">→</div>
+</a>
+
+<style>
+    .fate-card {
+        display: flex;
+        align-items: center;
+        gap: var(--space-lg);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .fate-card:hover {
+        border-color: var(--border-accent);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-icon {
+        font-size: 2rem;
+        font-family: var(--font-display);
+        color: var(--gold-thread);
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(212, 175, 55, 0.1);
+        border-radius: var(--radius-md);
+    }
+
+    .card-content {
+        flex: 1;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-xs);
+    }
+
+    .card-header h3 {
+        font-family: var(--font-display);
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .card-content p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .card-arrow {
+        color: var(--gold-thread);
+        font-size: 1.5rem;
+        opacity: 0;
+        transform: translateX(-8px);
+        transition: all 0.3s ease;
+    }
+
+    .fate-card:hover .card-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+</style>

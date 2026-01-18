@@ -1,0 +1,331 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const dockerPolicy = `strategies:
+  - threshold: 0.70
+    action: docker_pause_all
+  - threshold: 0.85
+    action: docker_stop_all`;
+
+const networkPolicy = `strategies:
+  - threshold: 0.90
+    action: ssh_isolate_network
+    command: "systemctl stop wireguard@wg0"
+    critical: true`;
+
+const networkCommands = `# Stop WireGuard tunnel
+command: "systemctl stop wireguard@wg0"
+
+# Full network isolation
+command: "wg-quick down wg0 && iptables -P INPUT DROP && iptables -P OUTPUT DROP"
+
+# Kill specific service
+command: "systemctl stop nginx"`;
+
+const vboxPolicy = `strategies:
+  - threshold: 0.95
+    action: vbox_revert_snapshot
+    snapshot_name: "LAST_ORDERED_STATE"
+    critical: true`;
+
+const cutterInterface = `type Cutter interface {
+    Name() string
+    CanHandle(action string) bool
+    Execute(ctx context.Context, target string, params map[string]string) error
+}
+
+type CutResult struct {
+    Target    string
+    Action    string
+    Success   bool
+    Error     error
+    LatencyMs int64
+}`;
+
+const registryCode = `func NewRegistry() *Registry {
+    return &Registry{
+        cutters: []Cutter{
+            NewDockerCutter(),
+            NewNetworkCutter(),
+            NewVBoxCutter(),
+        },
+    }
+}
+
+func (r *Registry) FindCutter(action string) (Cutter, bool) {
+    for _, c := range r.cutters {
+        if c.CanHandle(action) {
+            return c, true
+        }
+    }
+    return nil, false
+}`;
+---
+
+<Layout title="Cutters - Atropos" description="Modular remediation strategies">
+  <div class="doc-layout">
+    <aside class="sidebar">
+      <nav>
+        <a href="/moirai/atropos/">Overview</a>
+        <a href="/moirai/atropos/cutters/" class="active">Cutters</a>
+        <a href="/moirai/atropos/policy/">Policy Config</a>
+      </nav>
+    </aside>
+
+    <article class="content">
+      <header class="doc-header">
+        <h1>Cutters</h1>
+        <p class="subtitle">Modular Remediation Strategies</p>
+      </header>
+
+      <section>
+        <p>
+          Cutters are pluggable modules that execute specific remediation
+          actions. Each cutter implements the <code>Cutter</code> interface and is
+          registered in the global registry.
+        </p>
+      </section>
+
+      <section class="cutter">
+        <h2>DockerCutter</h2>
+        <p>Manages Docker containers on the target node.</p>
+
+        <h3>Actions</h3>
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr
+              ><td><code>docker_pause_all</code></td><td
+                >Pause all running containers</td
+              ></tr
+            >
+            <tr
+              ><td><code>docker_stop_all</code></td><td
+                >Stop all running containers</td
+              ></tr
+            >
+            <tr
+              ><td><code>docker_kill_all</code></td><td
+                >Kill all running containers (SIGKILL)</td
+              ></tr
+            >
+          </tbody>
+        </table>
+
+        <h3>Policy Example</h3>
+        <pre><code set:text={dockerPolicy} /></pre>
+      </section>
+
+      <section class="cutter">
+        <h2>NetworkCutter</h2>
+        <p>Executes arbitrary SSH commands for network isolation.</p>
+
+        <h3>Actions</h3>
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr
+              ><td><code>ssh_isolate_network</code></td><td
+                >Run custom command via SSH</td
+              ></tr
+            >
+          </tbody>
+        </table>
+
+        <h3>Policy Example</h3>
+        <pre><code set:text={networkPolicy} /></pre>
+
+        <h3>Common Commands</h3>
+        <pre><code set:text={networkCommands} /></pre>
+      </section>
+
+      <section class="cutter">
+        <h2>VBoxCutter</h2>
+        <p>Controls VirtualBox VMs for snapshot-based recovery.</p>
+
+        <h3>Actions</h3>
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr
+              ><td><code>vbox_revert_snapshot</code></td><td
+                >Revert VM to named snapshot</td
+              ></tr
+            >
+            <tr
+              ><td><code>vbox_poweroff</code></td><td
+                >Power off VM immediately</td
+              ></tr
+            >
+          </tbody>
+        </table>
+
+        <h3>Policy Example</h3>
+        <pre><code set:text={vboxPolicy} /></pre>
+
+        <p class="note">
+          <code>snapshot_name</code> must match an existing VirtualBox snapshot. Use
+          <code>VBoxManage snapshot list</code> to verify.
+        </p>
+      </section>
+
+      <section>
+        <h2>Cutter Interface</h2>
+        <p>All cutters implement this Go interface:</p>
+        <pre><code set:text={cutterInterface} /></pre>
+      </section>
+
+      <section>
+        <h2>Cutter Registry</h2>
+        <p>
+          Cutters are registered at startup and selected based on action name:
+        </p>
+        <pre><code set:text={registryCode} /></pre>
+      </section>
+
+      <section>
+        <h2>Action Summary</h2>
+        <table>
+          <thead>
+            <tr><th>Action</th><th>Cutter</th><th>Severity</th></tr>
+          </thead>
+          <tbody>
+            <tr
+              ><td><code>docker_pause_all</code></td><td>Docker</td><td>Low</td
+              ></tr
+            >
+            <tr
+              ><td><code>docker_stop_all</code></td><td>Docker</td><td
+                >Medium</td
+              ></tr
+            >
+            <tr
+              ><td><code>docker_kill_all</code></td><td>Docker</td><td>High</td
+              ></tr
+            >
+            <tr
+              ><td><code>ssh_isolate_network</code></td><td>Network</td><td
+                >High</td
+              ></tr
+            >
+            <tr
+              ><td><code>vbox_revert_snapshot</code></td><td>VBox</td><td
+                >Critical</td
+              ></tr
+            >
+            <tr
+              ><td><code>vbox_poweroff</code></td><td>VBox</td><td>Critical</td
+              ></tr
+            >
+          </tbody>
+        </table>
+      </section>
+    </article>
+  </div>
+</Layout>
+
+<style>
+  .doc-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: var(--space-2xl);
+    padding: var(--space-2xl) var(--space-lg);
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+  }
+
+  .sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .sidebar a {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .sidebar a:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  .sidebar a.active {
+    background: var(--bg-tertiary);
+    color: var(--gold-thread);
+    border-left: 2px solid var(--gold-thread);
+  }
+
+  .content {
+    max-width: 800px;
+  }
+
+  .doc-header {
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+  }
+
+  section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  section h2 {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  section h3 {
+    font-size: 0.95rem;
+    color: var(--gold-thread);
+    margin: var(--space-lg) 0 var(--space-sm);
+  }
+
+  .cutter {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+
+  .note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: var(--space-md);
+  }
+
+  @media (max-width: 900px) {
+    .doc-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      position: relative;
+      top: 0;
+    }
+
+    .sidebar nav {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
+</style>

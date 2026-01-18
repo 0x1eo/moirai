@@ -1,0 +1,369 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout
+    title="Policy Configuration - Atropos"
+    description="YAML policy format and advanced features"
+>
+    <div class="doc-layout">
+        <aside class="sidebar">
+            <nav>
+                <a href="/moirai/atropos/">Overview</a>
+                <a href="/moirai/atropos/cutters/">Cutters</a>
+                <a href="/moirai/atropos/policy/" class="active"
+                    >Policy Config</a
+                >
+            </nav>
+        </aside>
+
+        <article class="content">
+            <header class="doc-header">
+                <h1>Policy Configuration</h1>
+                <p class="subtitle">Defining Remediation Rules</p>
+            </header>
+
+            <section>
+                <p>
+                    The policy file (<code>atropos_policy.yaml</code>) defines
+                    which actions to take for each node at different entropy
+                    thresholds. It supports time windows, rate limiting, and
+                    escalation strategies.
+                </p>
+            </section>
+
+            <section>
+                <h2>Full Example</h2>
+                <pre><code>meta:
+  version: "1.0"
+  last_reviewed: "2026-01-18"
+
+server:
+  listen_addr: ":8443"
+  hmac_secret: "change-me-in-prod"  # or ATROPOS_HMAC_SECRET
+
+nodes:
+  athena:
+    host: "athena.local"
+    port: 22
+    user: "root"
+    description: "Primary application server"
+    time_windows:
+      - start: "09:00"
+        end: "17:00"
+    rate_limit:
+      max_cuts: 3
+      window_minutes: 60
+    strategies:
+      - threshold: 0.85
+        action: vbox_revert_snapshot
+        snapshot_name: "LAST_ORDERED_STATE"
+        critical: true
+        on_failure: "ssh_isolate_network"
+      - threshold: 0.70
+        action: docker_pause_all</code></pre>
+            </section>
+
+            <section>
+                <h2>Metadata Block</h2>
+                <pre><code>meta:
+  version: "1.0"
+  last_reviewed: "2026-01-18"</code></pre>
+                <p>Track policy version and review dates for audit purposes.</p>
+            </section>
+
+            <section>
+                <h2>Server Configuration</h2>
+                <pre><code>server:
+  listen_addr: ":8443"
+  hmac_secret: "your-secret-here"</code></pre>
+                <table>
+                    <thead>
+                        <tr><th>Field</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            ><td><code>listen_addr</code></td><td
+                                >Address:port to listen on</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>hmac_secret</code></td><td
+                                >Secret for webhook signature verification</td
+                            ></tr
+                        >
+                    </tbody>
+                </table>
+                <p class="note">
+                    Override HMAC secret with <code>ATROPOS_HMAC_SECRET</code> env
+                    var in production.
+                </p>
+            </section>
+
+            <section>
+                <h2>Node Definitions</h2>
+                <pre><code>nodes:
+  athena:
+    host: "athena.local"
+    port: 22
+    user: "root"
+    description: "Primary application server"
+    strategies:
+      - threshold: 0.85
+        action: vbox_revert_snapshot</code></pre>
+
+                <table>
+                    <thead>
+                        <tr><th>Field</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            ><td><code>host</code></td><td
+                                >Hostname or IP for SSH actions</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>port</code></td><td
+                                >SSH port (default: 22)</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>user</code></td><td
+                                >SSH user for network commands</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>description</code></td><td
+                                >Human-readable description</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>strategies</code></td><td
+                                >List of threshold → action mappings</td
+                            ></tr
+                        >
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h2>Strategies</h2>
+                <p>
+                    Strategies define what action to take at each entropy level:
+                </p>
+                <pre><code>strategies:
+  - threshold: 0.85
+    action: vbox_revert_snapshot
+    snapshot_name: "LAST_ORDERED_STATE"
+    critical: true
+    on_failure: "ssh_isolate_network"
+  - threshold: 0.70
+    action: docker_pause_all</code></pre>
+
+                <table>
+                    <thead>
+                        <tr><th>Field</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            ><td><code>threshold</code></td><td
+                                >Minimum entropy to trigger (0.0 - 1.0)</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>action</code></td><td
+                                >Cutter action to execute</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>critical</code></td><td
+                                >Mark as critical action</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>on_failure</code></td><td
+                                >Fallback action if primary fails</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>snapshot_name</code></td><td
+                                >VBox snapshot name (for vbox actions)</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>command</code></td><td
+                                >SSH command (for ssh_isolate_network)</td
+                            ></tr
+                        >
+                    </tbody>
+                </table>
+
+                <p class="note">
+                    Strategies are evaluated highest-threshold first. The first
+                    matching threshold wins.
+                </p>
+            </section>
+
+            <section>
+                <h2>Time Windows</h2>
+                <p>Restrict when cuts can be executed:</p>
+                <pre><code>time_windows:
+  - start: "09:00"
+    end: "17:00"    # Business hours only
+  - start: "00:00"
+    end: "04:00"    # Maintenance window</code></pre>
+                <p>Cuts outside these windows will be queued or rejected.</p>
+            </section>
+
+            <section>
+                <h2>Rate Limiting</h2>
+                <p>Prevent cut storms by limiting frequency:</p>
+                <pre><code>rate_limit:
+  max_cuts: 5
+  window_minutes: 60   # Max 5 cuts per hour</code></pre>
+                <p>
+                    If rate limit is exceeded, subsequent cuts are rejected
+                    until the window resets.
+                </p>
+            </section>
+
+            <section>
+                <h2>Conditional Actions</h2>
+                <p>Define fallback strategies when the primary action fails:</p>
+                <pre><code>strategies:
+  - threshold: 0.85
+    action: vbox_revert_snapshot
+    on_failure: "ssh_isolate_network"  # Fallback</code></pre>
+                <p>
+                    If <code>vbox_revert_snapshot</code> fails, Atropos will automatically
+                    try <code>ssh_isolate_network</code>.
+                </p>
+            </section>
+
+            <section>
+                <h2>Notifications</h2>
+                <p>
+                    Configure notifications in a separate file (<code
+                        >atropos_notification.yaml</code
+                    >):
+                </p>
+
+                <h3>Email</h3>
+                <pre><code>enabled: true
+email:
+  smtp_host: "smtp.example.com"
+  smtp_port: 587
+  smtp_user: "alerts@example.com"
+  smtp_password: "password"
+  from: "atropos@example.com"
+  to:
+    - "admin@example.com"
+    - "ops@example.com"</code></pre>
+
+                <h3>Webhook</h3>
+                <pre><code>enabled: true
+webhook:
+  url: "https://hooks.example.com/atropos"
+  headers:
+    Authorization: "Bearer token123"
+  retries: 3</code></pre>
+
+                <p>Set config path via environment:</p>
+                <pre><code>ATROPOS_NOTIFICATIONS_CONFIG=/path/to/config.yaml ./atropos</code></pre>
+            </section>
+        </article>
+    </div>
+</Layout>
+
+<style>
+    .doc-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: var(--space-2xl);
+        padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .sidebar a {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar a:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .sidebar a.active {
+        background: var(--bg-tertiary);
+        color: var(--gold-thread);
+        border-left: 2px solid var(--gold-thread);
+    }
+
+    .content {
+        max-width: 800px;
+    }
+
+    .doc-header {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+    }
+
+    section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    section h2 {
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    section h3 {
+        font-size: 0.95rem;
+        color: var(--gold-thread);
+        margin: var(--space-lg) 0 var(--space-sm);
+    }
+
+    .note {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: var(--space-md);
+    }
+
+    @media (max-width: 900px) {
+        .doc-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: relative;
+            top: 0;
+        }
+
+        .sidebar nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+    }
+</style>

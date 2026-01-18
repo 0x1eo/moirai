@@ -1,0 +1,319 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout
+    title="Baseline Configuration - Clotho"
+    description="YAML baseline format and ISO 27002 mappings"
+>
+    <div class="doc-layout">
+        <aside class="sidebar">
+            <nav>
+                <a href="/moirai/clotho/">Overview</a>
+                <a href="/moirai/clotho/collectors/">Collectors</a>
+                <a href="/moirai/clotho/baseline/" class="active"
+                    >Baseline Config</a
+                >
+            </nav>
+        </aside>
+
+        <article class="content">
+            <header class="doc-header">
+                <h1>Baseline Configuration</h1>
+                <p class="subtitle">Defining Expected System State</p>
+            </header>
+
+            <section>
+                <p>
+                    The baseline file (<code>baseline.yaml</code>) defines what
+                    "compliant" looks like for your systems. It maps ISO
+                    27002:2022 controls to specific checks executed by
+                    collectors.
+                </p>
+            </section>
+
+            <section>
+                <h2>Structure</h2>
+                <pre><code>meta:
+  version: "1.0"
+  standard: "ISO 27002:2022"
+  organization: "Your Org"
+  last_reviewed: "2026-01-18"
+  auditor: "Clotho Engine v1.0"
+
+nodes:
+  # Remote systems to audit
+  athena:
+    host: "athena.local"
+    port: 22
+    user: "auditor"
+    description: "Primary application server"
+
+controls:
+  # ISO control mappings
+  "8.20":
+    title: "Network Security"
+    collectors:
+      ports:
+        allowed: [22, 443]
+        forbidden: [21, 23]
+
+audit:
+  timeout_seconds: 30
+  parallel_nodes: true
+  fail_on_first_delta: false
+  evidence_retention_days: 90</code></pre>
+            </section>
+
+            <section>
+                <h2>Metadata Block</h2>
+                <table>
+                    <thead>
+                        <tr><th>Field</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            ><td><code>version</code></td><td
+                                >Baseline version string</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>standard</code></td><td
+                                >Compliance standard (e.g., ISO 27002:2022)</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>organization</code></td><td
+                                >Organization name for reports</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>last_reviewed</code></td><td
+                                >Date baseline was last reviewed</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>auditor</code></td><td
+                                >Tool identifier</td
+                            ></tr
+                        >
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h2>Node Definitions</h2>
+                <p>Each node represents a remote system to audit:</p>
+                <pre><code>nodes:
+  athena:
+    host: "192.168.1.10"  # IP or hostname
+    port: 22              # SSH port
+    user: "auditor"       # SSH user
+    description: "Primary application server"</code></pre>
+
+                <p class="note">
+                    SSH authentication uses the key specified via <code
+                        >--key-file</code
+                    > or the default SSH agent.
+                </p>
+            </section>
+
+            <section>
+                <h2>ISO 27002:2022 Control Mappings</h2>
+                <p>Controls map standard requirements to collector checks:</p>
+
+                <div class="control-example">
+                    <h3>5.15 - Access Control</h3>
+                    <pre><code>"5.15":
+  title: "Access Control"
+  description: "Rules to control access to information"
+  collectors:
+    users:
+      allowed: [root, leo, www-data]
+      forbidden: [guest, test, temp]</code></pre>
+                </div>
+
+                <div class="control-example">
+                    <h3>5.17 - Authentication Information</h3>
+                    <pre><code>"5.17":
+  title: "Authentication Information"
+  collectors:
+    files:
+      - path: "/etc/ssh/sshd_config"
+        sha256: null  # Will capture on first run
+      - path: "/etc/pam.d/common-auth"
+        sha256: null</code></pre>
+                </div>
+
+                <div class="control-example">
+                    <h3>8.20 - Network Security</h3>
+                    <pre><code>"8.20":
+  title: "Network Security"
+  collectors:
+    ports:
+      allowed: [22, 80, 443]
+      forbidden: [21, 23, 25, 3389, 5900]</code></pre>
+                </div>
+
+                <div class="control-example">
+                    <h3>8.21 - Security of Network Services</h3>
+                    <pre><code>"8.21":
+  title: "Security of Network Services"
+  collectors:
+    processes:
+      allowed: [sshd, systemd, cron]
+      forbidden: [telnetd, rshd, fingerd]</code></pre>
+                </div>
+            </section>
+
+            <section>
+                <h2>Audit Parameters</h2>
+                <table>
+                    <thead>
+                        <tr
+                            ><th>Parameter</th><th>Default</th><th
+                                >Description</th
+                            ></tr
+                        >
+                    </thead>
+                    <tbody>
+                        <tr
+                            ><td><code>timeout_seconds</code></td><td>30</td><td
+                                >SSH command timeout</td
+                            ></tr
+                        >
+                        <tr
+                            ><td><code>parallel_nodes</code></td><td>true</td
+                            ><td>Audit nodes concurrently</td></tr
+                        >
+                        <tr
+                            ><td><code>fail_on_first_delta</code></td><td
+                                >false</td
+                            ><td>Stop on first finding</td></tr
+                        >
+                        <tr
+                            ><td><code>evidence_retention_days</code></td><td
+                                >90</td
+                            ><td>Days to keep old audits</td></tr
+                        >
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h2>Validation</h2>
+                <p>Always validate your baseline before running audits:</p>
+                <pre><code>python clotho.py --validate-only</code></pre>
+                <p>
+                    This checks for YAML syntax errors and ensures all
+                    referenced collectors exist.
+                </p>
+            </section>
+        </article>
+    </div>
+</Layout>
+
+<style>
+    .doc-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: var(--space-2xl);
+        padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .sidebar a {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar a:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .sidebar a.active {
+        background: var(--bg-tertiary);
+        color: var(--gold-thread);
+        border-left: 2px solid var(--gold-thread);
+    }
+
+    .content {
+        max-width: 800px;
+    }
+
+    .doc-header {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+    }
+
+    section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    section h2 {
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .control-example {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+        margin-bottom: var(--space-md);
+    }
+
+    .control-example h3 {
+        font-size: 0.95rem;
+        color: var(--gold-thread);
+        margin-bottom: var(--space-sm);
+    }
+
+    .control-example pre {
+        margin: 0;
+    }
+
+    .note {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: var(--space-md);
+    }
+
+    @media (max-width: 900px) {
+        .doc-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: relative;
+            top: 0;
+        }
+
+        .sidebar nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+    }
+</style>

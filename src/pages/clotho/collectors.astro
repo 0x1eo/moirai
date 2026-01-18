@@ -1,0 +1,293 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout
+    title="Collectors - Clotho"
+    description="Modular evidence gatherers for system auditing"
+>
+    <div class="doc-layout">
+        <aside class="sidebar">
+            <nav>
+                <a href="/moirai/clotho/">Overview</a>
+                <a href="/moirai/clotho/collectors/" class="active"
+                    >Collectors</a
+                >
+                <a href="/moirai/clotho/baseline/">Baseline Config</a>
+            </nav>
+        </aside>
+
+        <article class="content">
+            <header class="doc-header">
+                <h1>Collectors</h1>
+                <p class="subtitle">Modular Evidence Gatherers</p>
+            </header>
+
+            <section>
+                <p>
+                    Collectors are pluggable modules that gather specific
+                    evidence from remote systems. Each collector implements a
+                    common interface with <code>get_command()</code>,
+                    <code>parse_output()</code>, and <code>compare()</code> methods.
+                </p>
+            </section>
+
+            <section class="collector">
+                <h2>PortCollector</h2>
+                <p>Scans for listening TCP/UDP ports using <code>ss</code>.</p>
+
+                <h3>Baseline Configuration</h3>
+                <pre><code>collectors:
+  ports:
+    allowed: [22, 443, 80]
+    forbidden: [21, 23, 3389, 5900]</code></pre>
+
+                <h3>Evidence Collected</h3>
+                <ul>
+                    <li>List of all listening ports</li>
+                    <li>Protocol (TCP/UDP)</li>
+                    <li>Binding address</li>
+                </ul>
+
+                <h3>Comparison Logic</h3>
+                <ul>
+                    <li>
+                        <strong class="pass">Pass</strong>: Only allowed ports
+                        are open
+                    </li>
+                    <li>
+                        <strong class="fail">Fail</strong>: Forbidden port
+                        detected or unexpected port open
+                    </li>
+                </ul>
+            </section>
+
+            <section class="collector">
+                <h2>UserCollector</h2>
+                <p>Enumerates system users from <code>/etc/passwd</code>.</p>
+
+                <h3>Baseline Configuration</h3>
+                <pre><code>collectors:
+  users:
+    allowed:
+      - root
+      - www-data
+      - sysadmin
+    forbidden:
+      - guest
+      - test
+      - temp</code></pre>
+
+                <h3>Evidence Collected</h3>
+                <ul>
+                    <li>Username</li>
+                    <li>UID/GID</li>
+                    <li>Shell</li>
+                    <li>Home directory</li>
+                </ul>
+            </section>
+
+            <section class="collector">
+                <h2>FileCollector</h2>
+                <p>Checks file existence and integrity via SHA-256 hashes.</p>
+
+                <h3>Baseline Configuration</h3>
+                <pre><code>collectors:
+  files:
+    - path: "/etc/ssh/sshd_config"
+      description: "SSH daemon config"
+      sha256: "a1b2c3..."  # Expected hash
+    - path: "/etc/sudoers"
+      sha256: null  # Just check existence</code></pre>
+
+                <h3>Evidence Collected</h3>
+                <ul>
+                    <li>File existence</li>
+                    <li>SHA-256 hash</li>
+                    <li>Permission mode</li>
+                    <li>Owner/group</li>
+                </ul>
+
+                <h3>Comparison Logic</h3>
+                <ul>
+                    <li>
+                        <strong class="pass">Pass</strong>: File exists and hash
+                        matches (if specified)
+                    </li>
+                    <li>
+                        <strong class="fail">Fail</strong>: File missing, hash
+                        mismatch, or permission drift
+                    </li>
+                </ul>
+
+                <p class="note">
+                    Use <code>--show-diffs</code> to see actual file changes when
+                    hashes don't match.
+                </p>
+            </section>
+
+            <section class="collector">
+                <h2>ProcessCollector</h2>
+                <p>Lists running processes using <code>ps</code>.</p>
+
+                <h3>Baseline Configuration</h3>
+                <pre><code>collectors:
+  processes:
+    allowed:
+      - sshd
+      - systemd
+      - cron
+    forbidden:
+      - telnetd
+      - rshd
+      - fingerd</code></pre>
+
+                <h3>Evidence Collected</h3>
+                <ul>
+                    <li>Process name</li>
+                    <li>PID</li>
+                    <li>Running user</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Collector Interface</h2>
+                <p>All collectors implement this abstract interface:</p>
+                <pre><code>class Collector(ABC):
+    name: str = "base"
+    description: str = "Base collector"
+
+    @abstractmethod
+    def get_command(self) -> str:
+        """Return shell command to execute."""
+        pass
+
+    @abstractmethod
+    def parse_output(self, raw_output: str) -> dict:
+        """Parse raw command output into structured data."""
+        pass
+
+    @abstractmethod
+    def compare(self, actual: dict, expected: dict) -> dict:
+        """Compare actual vs expected, return findings."""
+        pass</code></pre>
+            </section>
+        </article>
+    </div>
+</Layout>
+
+<style>
+    .doc-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: var(--space-2xl);
+        padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .sidebar a {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar a:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .sidebar a.active {
+        background: var(--bg-tertiary);
+        color: var(--gold-thread);
+        border-left: 2px solid var(--gold-thread);
+    }
+
+    .content {
+        max-width: 800px;
+    }
+
+    .doc-header {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+    }
+
+    section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    section h2 {
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    section h3 {
+        font-size: 0.95rem;
+        color: var(--gold-thread);
+        margin: var(--space-lg) 0 var(--space-sm);
+    }
+
+    .collector {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+    }
+
+    ul {
+        padding-left: var(--space-lg);
+        color: var(--text-secondary);
+    }
+
+    li {
+        margin-bottom: var(--space-xs);
+    }
+
+    .pass {
+        color: var(--compliance);
+    }
+    .fail {
+        color: var(--drift);
+    }
+
+    .note {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: var(--space-md);
+    }
+
+    @media (max-width: 900px) {
+        .doc-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: relative;
+            top: 0;
+        }
+
+        .sidebar nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+    }
+</style>

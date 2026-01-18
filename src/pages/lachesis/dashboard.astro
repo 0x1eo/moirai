@@ -1,0 +1,332 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const envConfig = `export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:6380/api'
+};`;
+---
+
+<Layout
+    title="Dashboard - Lachesis"
+    description="Angular dashboard features and metrics"
+>
+    <div class="doc-layout">
+        <aside class="sidebar">
+            <nav>
+                <a href="/moirai/lachesis/">Overview</a>
+                <a href="/moirai/lachesis/api/">API Reference</a>
+                <a href="/moirai/lachesis/dashboard/" class="active"
+                    >Dashboard</a
+                >
+            </nav>
+        </aside>
+
+        <article class="content">
+            <header class="doc-header">
+                <h1>Dashboard</h1>
+                <p class="subtitle">Angular 17 SPA - Port 4200</p>
+            </header>
+
+            <section>
+                <p>
+                    The Lachesis dashboard provides real-time visibility into
+                    system compliance. Built with Angular 17 using standalone
+                    components, it connects to the API server to display trends,
+                    timelines, and detailed audit information.
+                </p>
+            </section>
+
+            <section>
+                <h2>Features</h2>
+                <div class="feature-grid">
+                    <div class="feature">
+                        <h3>Stats Overview</h3>
+                        <p>
+                            At-a-glance view of all nodes with current entropy,
+                            stability, and MTBF scores.
+                        </p>
+                    </div>
+                    <div class="feature">
+                        <h3>Entropy Timeline</h3>
+                        <p>
+                            Interactive charts showing entropy over time.
+                            Identify when drift occurred.
+                        </p>
+                    </div>
+                    <div class="feature">
+                        <h3>Audit Details</h3>
+                        <p>
+                            Drill into specific audits to see which controls
+                            passed or failed with full evidence.
+                        </p>
+                    </div>
+                    <div class="feature">
+                        <h3>Audit Comparison</h3>
+                        <p>
+                            Compare two audits side-by-side to see what changed
+                            between runs.
+                        </p>
+                    </div>
+                    <div class="feature">
+                        <h3>Trend Analysis</h3>
+                        <p>
+                            View compliance trends per node or globally.
+                            Identify patterns and recurring issues.
+                        </p>
+                    </div>
+                    <div class="feature">
+                        <h3>Real-time Updates</h3>
+                        <p>
+                            Dashboard refreshes automatically when new audits
+                            are ingested.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Node Health Indicators</h2>
+                <table>
+                    <thead>
+                        <tr
+                            ><th>Entropy Range</th><th>Status</th><th>Color</th
+                            ></tr
+                        >
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>0.00 - 0.30</code></td>
+                            <td>Healthy</td>
+                            <td><span class="status healthy">●</span> Green</td>
+                        </tr>
+                        <tr>
+                            <td><code>0.31 - 0.60</code></td>
+                            <td>Warning</td>
+                            <td><span class="status warning">●</span> Yellow</td
+                            >
+                        </tr>
+                        <tr>
+                            <td><code>0.61 - 0.80</code></td>
+                            <td>Degraded</td>
+                            <td
+                                ><span class="status degraded">●</span> Orange</td
+                            >
+                        </tr>
+                        <tr>
+                            <td><code>0.81 - 1.00</code></td>
+                            <td>Critical</td>
+                            <td><span class="status critical">●</span> Red</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h2>Pages</h2>
+
+                <div class="page">
+                    <h3>/</h3>
+                    <p>
+                        Home page with global stats, node list with entropy
+                        indicators, and recent alerts.
+                    </p>
+                </div>
+
+                <div class="page">
+                    <h3>/node/[nodeId]</h3>
+                    <p>
+                        Node detail page with entropy timeline chart, MTBF
+                        stats, and audit history.
+                    </p>
+                </div>
+
+                <div class="page">
+                    <h3>/audit/[auditId]</h3>
+                    <p>
+                        Full audit report display with control-by-control
+                        breakdown and evidence.
+                    </p>
+                </div>
+
+                <div class="page">
+                    <h3>/compare</h3>
+                    <p>Audit comparison tool. Select two audits to diff.</p>
+                </div>
+
+                <div class="page">
+                    <h3>/trends</h3>
+                    <p>Global trend analysis with filterable date ranges.</p>
+                </div>
+            </section>
+
+            <section>
+                <h2>Running the Dashboard</h2>
+                <pre><code>cd dashboard
+npm install
+npm start</code></pre>
+                <p>
+                    Dashboard will be available at <code
+                        >http://localhost:4200</code
+                    >
+                </p>
+                <p class="note">
+                    Ensure the API server is running on port 6380 before
+                    starting the dashboard.
+                </p>
+            </section>
+
+            <section>
+                <h2>Configuration</h2>
+                <p>API URL can be configured in <code>environment.ts</code>:</p>
+                <pre><code set:text={envConfig} /></pre>
+            </section>
+        </article>
+    </div>
+</Layout>
+
+<style>
+    .doc-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: var(--space-2xl);
+        padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .sidebar a {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar a:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .sidebar a.active {
+        background: var(--bg-tertiary);
+        color: var(--gold-thread);
+        border-left: 2px solid var(--gold-thread);
+    }
+
+    .content {
+        max-width: 800px;
+    }
+
+    .doc-header {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+    }
+
+    section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    section h2 {
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .feature {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+    }
+
+    .feature h3 {
+        font-size: 1rem;
+        margin-bottom: var(--space-sm);
+    }
+
+    .feature p {
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .page {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+        margin-bottom: var(--space-md);
+    }
+
+    .page h3 {
+        font-size: 0.95rem;
+        color: var(--gold-thread);
+        font-family: monospace;
+        margin-bottom: var(--space-xs);
+    }
+
+    .page p {
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .status {
+        font-size: 1.2rem;
+    }
+
+    .status.healthy {
+        color: var(--compliance);
+    }
+    .status.warning {
+        color: var(--warning);
+    }
+    .status.degraded {
+        color: #f97316;
+    }
+    .status.critical {
+        color: var(--drift);
+    }
+
+    .note {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+        .doc-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: relative;
+            top: 0;
+        }
+
+        .sidebar nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+    }
+</style>

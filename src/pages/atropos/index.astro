@@ -1,0 +1,295 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const webhookExample = `PAYLOAD='{"node":"athena","entropy":0.87}'
+SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "your-secret" | cut -d' ' -f2)
+curl -X POST http://localhost:8443/api/v1/cut \\
+  -H "Content-Type: application/json" \\
+  -H "X-Lachesis-Signature: sha256=$SIG" \\
+  -d "$PAYLOAD"`;
+
+const correlationExample = `# Import audit report
+curl -X POST http://localhost:8443/api/v1/correlation/import \\
+  -H "Content-Type: application/json" \\
+  -d @clotho_audit_report.json
+
+# Get correlations
+curl http://localhost:8443/api/v1/correlation/athena?hours=24`;
+---
+
+<Layout
+  title="Atropos"
+  description="The Cutter - Automated Remediation Service"
+>
+  <div class="doc-layout">
+    <aside class="sidebar">
+      <nav>
+        <a href="/moirai/atropos/" class="active">Overview</a>
+        <a href="/moirai/atropos/cutters/">Cutters</a>
+        <a href="/moirai/atropos/policy/">Policy Config</a>
+      </nav>
+    </aside>
+
+    <article class="content">
+      <header class="doc-header">
+        <span class="badge badge-go">Go</span>
+        <h1>Atropos</h1>
+        <p class="subtitle">The Cutter of the Thread</p>
+      </header>
+
+      <section>
+        <p>
+          Atropos is an automated remediation service. When Lachesis detects
+          entropy above threshold, Atropos executes the "cut" - isolate, pause,
+          or revert the offending node. It supports Docker, VirtualBox, and
+          SSH-based actions with policy-driven escalation.
+        </p>
+
+        <blockquote>
+          In Greek mythology, Atropos cut the thread of life, ending mortal
+          existence. This Atropos cuts network tunnels and reverts snapshots.
+        </blockquote>
+      </section>
+
+      <section>
+        <h2>Installation</h2>
+        <pre><code>go mod tidy
+go build</code></pre>
+      </section>
+
+      <section>
+        <h2>Usage</h2>
+        <pre><code># Start with default policy
+./atropos
+
+# Custom policy file
+./atropos -policy /etc/atropos/policy.yaml
+
+# Custom history directory
+./atropos -history-dir /var/lib/atropos/history
+
+# With HMAC secret (recommended)
+ATROPOS_HMAC_SECRET=your-secret ./atropos</code></pre>
+        <p class="note">Default port is <code>:8443</code></p>
+      </section>
+
+      <section>
+        <h2>Key Features</h2>
+        <div class="feature-grid">
+          <div class="feature">
+            <h3>Core Remediation</h3>
+            <p>
+              Execute cuts based on entropy thresholds with strategy escalation
+              on failure.
+            </p>
+          </div>
+          <div class="feature">
+            <h3>History & Logging</h3>
+            <p>
+              Persistent cut history with gzip compression and configurable
+              retention.
+            </p>
+          </div>
+          <div class="feature">
+            <h3>Trend Analysis</h3>
+            <p>
+              Success rates, MTTR calculation, problematic node identification.
+            </p>
+          </div>
+          <div class="feature">
+            <h3>Web Dashboard</h3>
+            <p>Real-time stats, node metrics, dry-run testing interface.</p>
+          </div>
+          <div class="feature">
+            <h3>Time Windows</h3>
+            <p>Restrict cuts to specific hours (e.g., business hours only).</p>
+          </div>
+          <div class="feature">
+            <h3>Notifications</h3>
+            <p>Email and webhook alerts on cut execution.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Webhook Integration</h2>
+        <p>Lachesis sends entropy alerts to Atropos via signed webhooks:</p>
+        <pre><code set:text={webhookExample} /></pre>
+      </section>
+
+      <section>
+        <h2>API Endpoints</h2>
+        <table>
+          <thead>
+            <tr><th>Endpoint</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr
+              ><td><code>POST /api/v1/cut</code></td><td
+                >Execute cut (requires HMAC)</td
+              ></tr
+            >
+            <tr
+              ><td><code>POST /api/v1/cut/dryrun</code></td><td>Simulate cut</td
+              ></tr
+            >
+            <tr
+              ><td><code>GET /api/v1/cuts/history</code></td><td
+                >List all cuts</td
+              ></tr
+            >
+            <tr
+              ><td><code>GET /api/v1/stats</code></td><td>Global statistics</td
+              ></tr
+            >
+            <tr
+              ><td><code>GET /api/v1/trends</code></td><td>Trend analysis</td
+              ></tr
+            >
+            <tr
+              ><td><code>GET /api/v1/export/report.html</code></td><td
+                >HTML report</td
+              ></tr
+            >
+            <tr><td><code>GET /</code></td><td>Web dashboard</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Clotho Correlation</h2>
+        <p>
+          Import Clotho audit reports to correlate failures with remediation:
+        </p>
+        <pre><code set:text={correlationExample} /></pre>
+        <p>
+          Response includes effectiveness percentage, resolved findings, and
+          controls triggering most cuts.
+        </p>
+      </section>
+    </article>
+  </div>
+</Layout>
+
+<style>
+  .doc-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: var(--space-2xl);
+    padding: var(--space-2xl) var(--space-lg);
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+  }
+
+  .sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .sidebar a {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .sidebar a:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  .sidebar a.active {
+    background: var(--bg-tertiary);
+    color: var(--gold-thread);
+    border-left: 2px solid var(--gold-thread);
+  }
+
+  .content {
+    max-width: 800px;
+  }
+
+  .doc-header {
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .doc-header h1 {
+    margin: var(--space-sm) 0;
+  }
+
+  .subtitle {
+    font-family: var(--font-display);
+    color: var(--gold-thread);
+    font-style: italic;
+  }
+
+  section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  section h2 {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  blockquote {
+    border-left: 3px solid var(--gold-thread);
+    padding-left: var(--space-lg);
+    margin: var(--space-lg) 0;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .feature {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+  }
+
+  .feature h3 {
+    font-size: 0.95rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .feature p {
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .doc-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      position: relative;
+      top: 0;
+    }
+
+    .sidebar nav {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
+</style>

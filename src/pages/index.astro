@@ -1,0 +1,276 @@
+---
+import Layout from "../layouts/Layout.astro";
+import FateCard from "../components/FateCard.astro";
+---
+
+<Layout
+	title="Moirai Suite"
+	description="Compliance, Measurement, and Remediation - The Three Fates of System Observability"
+>
+	<section class="hero">
+		<div class="container">
+			<div class="hero-content">
+				<p class="hero-subtitle">The Three Fates</p>
+				<h1>Moirai Suite</h1>
+				<p class="hero-tagline">
+					A unified toolkit for compliance auditing, drift
+					measurement, and automated remediation. Named after the
+					Greek Fates who spin, measure, and cut the thread of life.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="fates">
+		<div class="container">
+			<div class="fates-grid">
+				<FateCard
+					title="Clotho"
+					description="The Spinner - Audits systems via SSH, collects evidence, and compares against your compliance baseline."
+					icon="C"
+					href="/moirai/clotho/"
+					badge="Python"
+					badgeClass="badge-python"
+				/>
+				<FateCard
+					title="Lachesis"
+					description="The Measurer - Tracks entropy and stability over time. Ingests reports, calculates MTBF, shows trends."
+					icon="L"
+					href="/moirai/lachesis/"
+					badge="Node.js"
+					badgeClass="badge-node"
+				/>
+				<FateCard
+					title="Atropos"
+					description="The Cutter - When entropy exceeds threshold, executes the cut: isolate, pause, or revert the node."
+					icon="A"
+					href="/moirai/atropos/"
+					badge="Go"
+					badgeClass="badge-go"
+				/>
+			</div>
+		</div>
+	</section>
+
+	<section class="architecture">
+		<div class="container">
+			<h2>How They Work Together</h2>
+			<div class="flow">
+				<div class="flow-item">
+					<div class="flow-icon">C</div>
+					<div class="flow-label">Clotho</div>
+					<div class="flow-desc">Audits systems</div>
+				</div>
+				<div class="flow-arrow">→</div>
+				<div class="flow-item">
+					<div class="flow-icon">{}</div>
+					<div class="flow-label">JSON Reports</div>
+					<div class="flow-desc">Evidence & findings</div>
+				</div>
+				<div class="flow-arrow">→</div>
+				<div class="flow-item">
+					<div class="flow-icon">L</div>
+					<div class="flow-label">Lachesis</div>
+					<div class="flow-desc">Calculates entropy</div>
+				</div>
+				<div class="flow-arrow">→</div>
+				<div class="flow-item">
+					<div class="flow-icon">!</div>
+					<div class="flow-label">Webhook</div>
+					<div class="flow-desc">Threshold breach</div>
+				</div>
+				<div class="flow-arrow">→</div>
+				<div class="flow-item">
+					<div class="flow-icon">A</div>
+					<div class="flow-label">Atropos</div>
+					<div class="flow-desc">Remediates</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="quickstart">
+		<div class="container">
+			<h2>Quick Start</h2>
+			<div class="quickstart-grid">
+				<div class="quickstart-item">
+					<h3>1. Define Your Baseline</h3>
+					<p>
+						Create a <code>baseline.yaml</code> with allowed users, ports,
+						processes, and file hashes.
+					</p>
+				</div>
+				<div class="quickstart-item">
+					<h3>2. Run Audits</h3>
+					<p>
+						Use Clotho to SSH into nodes and compare actual state
+						against baseline.
+					</p>
+				</div>
+				<div class="quickstart-item">
+					<h3>3. Ingest Reports</h3>
+					<p>
+						Send Clotho's JSON output to Lachesis for storage and
+						trend analysis.
+					</p>
+				</div>
+				<div class="quickstart-item">
+					<h3>4. Configure Remediation</h3>
+					<p>
+						Define policies in Atropos to automatically respond to
+						high entropy events.
+					</p>
+				</div>
+			</div>
+		</div>
+	</section>
+</Layout>
+
+<style>
+	.hero {
+		padding: var(--space-3xl) 0;
+		text-align: center;
+		border-bottom: 1px solid var(--border-subtle);
+	}
+
+	.hero-content {
+		max-width: 700px;
+		margin: 0 auto;
+	}
+
+	.hero-subtitle {
+		font-family: var(--font-display);
+		color: var(--gold-thread);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		font-size: 0.9rem;
+		margin-bottom: var(--space-sm);
+	}
+
+	.hero h1 {
+		font-size: 3.5rem;
+		margin-bottom: var(--space-lg);
+		background: linear-gradient(
+			135deg,
+			var(--text-primary) 0%,
+			var(--gold-thread) 100%
+		);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.hero-tagline {
+		font-size: 1.15rem;
+		color: var(--text-secondary);
+		line-height: 1.7;
+	}
+
+	.fates {
+		padding: var(--space-3xl) 0;
+	}
+
+	.fates-grid {
+		display: grid;
+		gap: var(--space-lg);
+	}
+
+	.architecture {
+		padding: var(--space-3xl) 0;
+		border-top: 1px solid var(--border-subtle);
+	}
+
+	.architecture h2 {
+		text-align: center;
+		margin-bottom: var(--space-2xl);
+	}
+
+	.flow {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-wrap: wrap;
+		gap: var(--space-md);
+	}
+
+	.flow-item {
+		text-align: center;
+		padding: var(--space-lg);
+		background: var(--bg-primary);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-md);
+		min-width: 120px;
+	}
+
+	.flow-icon {
+		font-size: 1.5rem;
+		font-family: var(--font-display);
+		color: var(--gold-thread);
+		margin-bottom: var(--space-xs);
+	}
+
+	.flow-label {
+		font-family: var(--font-display);
+		font-weight: 600;
+		font-size: 0.9rem;
+	}
+
+	.flow-desc {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-top: var(--space-xs);
+	}
+
+	.flow-arrow {
+		color: var(--gold-thread);
+		font-size: 1.5rem;
+	}
+
+	.quickstart {
+		padding: var(--space-3xl) 0;
+		border-top: 1px solid var(--border-subtle);
+	}
+
+	.quickstart h2 {
+		text-align: center;
+		margin-bottom: var(--space-2xl);
+	}
+
+	.quickstart-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: var(--space-lg);
+	}
+
+	.quickstart-item {
+		background: var(--bg-primary);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-md);
+		padding: var(--space-xl);
+	}
+
+	.quickstart-item h3 {
+		font-size: 1rem;
+		margin-bottom: var(--space-sm);
+		color: var(--gold-thread);
+	}
+
+	.quickstart-item p {
+		font-size: 0.9rem;
+		margin: 0;
+	}
+
+	@media (max-width: 768px) {
+		.hero h1 {
+			font-size: 2.5rem;
+		}
+
+		.flow {
+			flex-direction: column;
+		}
+
+		.flow-arrow {
+			transform: rotate(90deg);
+		}
+	}
+</style>

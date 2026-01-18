@@ -1,0 +1,323 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+// Code examples as raw strings to avoid JSX parsing issues
+const healthResponse = `{
+  "status": "operational",
+  "timestamp": "2026-01-18T00:15:00Z"
+}`;
+
+const ingestRequest = `{
+  "baseline_version": "1.0",
+  "standard": "ISO 27002:2022",
+  "generated_at": "2026-01-18T00:10:00Z",
+  "nodes": ["athena"],
+  "findings": [
+    {
+      "control_id": "8.20",
+      "control_title": "Network Security",
+      "node": "athena",
+      "passed": false,
+      "evidence": { "forbidden_ports": [23] }
+    }
+  ],
+  "summary": {
+    "total": 5,
+    "passed": 4,
+    "failed": 1
+  }
+}`;
+
+const ingestResponse = `{
+  "success": true,
+  "auditId": "audit_20260118_001000",
+  "entropy": 0.72
+}`;
+
+const statsResponse = `{
+  "nodes": [
+    {
+      "nodeId": "athena",
+      "entropy": 0.72,
+      "stability": 0.85,
+      "mtbf_hours": 168,
+      "last_audit": "2026-01-18T00:10:00Z"
+    }
+  ]
+}`;
+
+const timelineResponse = `{
+  "nodeId": "athena",
+  "timeline": [
+    { "timestamp": "2026-01-17T00:00:00Z", "entropy": 0.15 },
+    { "timestamp": "2026-01-18T00:00:00Z", "entropy": 0.72 }
+  ]
+}`;
+
+const compareResponse = `{
+  "added_findings": [...],
+  "removed_findings": [...],
+  "changed_findings": [...],
+  "entropy_delta": 0.57
+}`;
+
+const workflowExample = `# 1. Run Clotho audit
+python clotho.py --node athena --format json
+
+# 2. Ingest report
+curl -X POST http://localhost:6380/api/ingest \\
+  -H "Content-Type: application/json" \\
+  -d @output/audit_20260118.json
+
+# 3. Check stats
+curl http://localhost:6380/api/threads/stats
+
+# 4. View timeline
+curl http://localhost:6380/api/threads/athena/timeline`;
+---
+
+<Layout
+    title="API Reference - Lachesis"
+    description="REST API endpoints for the compliance dashboard"
+>
+    <div class="doc-layout">
+        <aside class="sidebar">
+            <nav>
+                <a href="/moirai/lachesis/">Overview</a>
+                <a href="/moirai/lachesis/api/" class="active">API Reference</a>
+                <a href="/moirai/lachesis/dashboard/">Dashboard</a>
+            </nav>
+        </aside>
+
+        <article class="content">
+            <header class="doc-header">
+                <h1>API Reference</h1>
+                <p class="subtitle">Port 6380</p>
+            </header>
+
+            <section>
+                <h2>Health Check</h2>
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/health</code>
+                </div>
+                <p>Returns API status and timestamp.</p>
+                <pre><code set:text={healthResponse} /></pre>
+            </section>
+
+            <section>
+                <h2>Ingest</h2>
+                <div class="endpoint">
+                    <div class="method post">POST</div>
+                    <code>/api/ingest</code>
+                </div>
+                <p>
+                    Ingest a Clotho audit report. This is the primary data
+                    intake endpoint.
+                </p>
+
+                <h3>Request Body</h3>
+                <pre><code set:text={ingestRequest} /></pre>
+
+                <h3>Response</h3>
+                <pre><code set:text={ingestResponse} /></pre>
+            </section>
+
+            <section>
+                <h2>Threads (Stats)</h2>
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/api/threads/stats</code>
+                </div>
+                <p>Get MTBF and entropy statistics for all nodes.</p>
+                <pre><code set:text={statsResponse} /></pre>
+
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/api/threads/:nodeId/timeline</code>
+                </div>
+                <p>Get entropy timeline for a specific node.</p>
+                <pre><code set:text={timelineResponse} /></pre>
+            </section>
+
+            <section>
+                <h2>Audits</h2>
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/api/audits/list/:nodeId</code>
+                </div>
+                <p>List audit history for a node.</p>
+
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/api/audits/:auditId</code>
+                </div>
+                <p>Get full audit details including all findings.</p>
+
+                <div class="endpoint">
+                    <div class="method delete">DELETE</div>
+                    <code>/api/audits/:auditId</code>
+                </div>
+                <p>Delete an audit record.</p>
+            </section>
+
+            <section>
+                <h2>Trends</h2>
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/api/trends/node/:nodeId</code>
+                </div>
+                <p>
+                    Get trend data for a specific node (entropy over time,
+                    control pass rates).
+                </p>
+
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/api/trends/global</code>
+                </div>
+                <p>Get global compliance trends across all nodes.</p>
+            </section>
+
+            <section>
+                <h2>Comparison</h2>
+                <div class="endpoint">
+                    <div class="method get">GET</div>
+                    <code>/api/compare/:auditId1/:auditId2</code>
+                </div>
+                <p>Compare two audits to see what changed.</p>
+                <pre><code set:text={compareResponse} /></pre>
+            </section>
+
+            <section>
+                <h2>Example: Full Workflow</h2>
+                <pre><code set:text={workflowExample} /></pre>
+            </section>
+        </article>
+    </div>
+</Layout>
+
+<style>
+    .doc-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        gap: var(--space-2xl);
+        padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .sidebar a {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar a:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .sidebar a.active {
+        background: var(--bg-tertiary);
+        color: var(--gold-thread);
+        border-left: 2px solid var(--gold-thread);
+    }
+
+    .content {
+        max-width: 800px;
+    }
+
+    .doc-header {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+    }
+
+    section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    section h2 {
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    section h3 {
+        font-size: 0.95rem;
+        color: var(--gold-thread);
+        margin: var(--space-lg) 0 var(--space-sm);
+    }
+
+    .endpoint {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
+        padding: var(--space-sm) var(--space-md);
+        background: var(--bg-primary);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .method {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25em 0.5em;
+        border-radius: var(--radius-sm);
+        text-transform: uppercase;
+    }
+
+    .method.get {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+    }
+    .method.post {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+    }
+    .method.delete {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    .endpoint code {
+        background: none;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 900px) {
+        .doc-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: relative;
+            top: 0;
+        }
+
+        .sidebar nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+    }
+</style>
